@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gagu_schedule/domain/bloc/interner_bloc/internet_cubit.dart';
+import 'package:gagu_schedule/domain/bloc/interner_bloc/internet_state.dart';
 import 'package:gagu_schedule/internal/dependecies/group_module.dart';
 import 'package:gagu_schedule/domain/bloc/group_bloc/group_bloc.dart';
 import 'package:gagu_schedule/presentation/rasp.dart';
@@ -28,7 +30,7 @@ class _GroupPageState extends State<GroupPage> {
           const SizedBox(
             height: 10.0,
           ),
-          listGroup(),
+            listGroup(),
         ],
       ),
     );
@@ -56,12 +58,18 @@ class _GroupPageState extends State<GroupPage> {
   }
 
   Widget listGroup() {
+    final internetCheck =
+        context.select((InternetCubit cubit) => cubit.state.type);
     final groups = context.select((GroupBloc bloc) => bloc.state.groups);
     return Expanded(
       child: Center(
         child: Builder(
           builder: (_) {
-            if (groups.isNotEmpty) {
+            if (internetCheck == InternetTypes.offline ||
+                internetCheck == InternetTypes.unknown) {
+              return const Text("Нет соединения");
+            }
+            if (internetCheck == InternetTypes.connected && groups.isNotEmpty) {
               return ListView.builder(
                 itemCount: groups.length,
                 itemBuilder: (BuildContext context, int index) {
@@ -106,6 +114,7 @@ class _GroupPageState extends State<GroupPage> {
                 },
               );
             }
+
             return const CircularProgressIndicator();
           },
         ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gagu_schedule/domain/bloc/interner_bloc/internet_cubit.dart';
+import 'package:gagu_schedule/domain/bloc/interner_bloc/internet_state.dart';
 import 'package:gagu_schedule/domain/bloc/teacher_bloc/teacher_bloc.dart';
 import 'package:gagu_schedule/presentation/rasp.dart';
 
@@ -46,7 +48,7 @@ class _TeacherPageState extends State<TeacherPage> {
         filled: true,
         fillColor: Colors.white60,
         contentPadding: EdgeInsets.all(15.0),
-        hintText: 'Введите вашу группу',
+        hintText: 'Поиск преподователя',
       ),
       onChanged: (value) {
         context.read<TeacherBloc>().add(SearchTeacherEvent(query: value));
@@ -55,13 +57,19 @@ class _TeacherPageState extends State<TeacherPage> {
   }
 
   Widget listGroup() {
+    final internetCheck =
+        context.select((InternetCubit cubit) => cubit.state.type);
     final groups = context.select((TeacherBloc bloc) => bloc.state.teachers);
     return Expanded(
-      child: Builder(
-        builder: (_) {
-          if (groups.isNotEmpty) {
-            return Center(
-              child: ListView.builder(
+      child: Center(
+        child: Builder(
+          builder: (_) {
+            if (internetCheck == InternetTypes.offline ||
+                internetCheck == InternetTypes.unknown) {
+              return const Text("Нет соединения");
+            }
+            if (internetCheck == InternetTypes.connected && groups.isNotEmpty) {
+              return ListView.builder(
                 itemCount: groups.length,
                 itemBuilder: (BuildContext context, int index) {
                   return InkWell(
@@ -95,13 +103,11 @@ class _TeacherPageState extends State<TeacherPage> {
                     ),
                   );
                 },
-              ),
-            );
-          }
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        },
+              );
+            }
+            return const CircularProgressIndicator();
+          },
+        ),
       ),
     );
   }
